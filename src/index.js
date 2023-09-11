@@ -3,6 +3,7 @@ import tokenMiddleware from "./util/tokenMiddleware.js";
 import getAccounts from "./util/accountServer.js";
 import Account from "./resolvers/Account.js";
 import Mutation from "./resolvers/Mutation.js";
+import Query from "./resolvers/Query.js";
 
 import importAsString from "@reactioncommerce/api-utils/importAsString.js";
 
@@ -19,6 +20,7 @@ export default async function register(app) {
   let ResolverObj = accountsGraphQL.resolvers;
   ResolverObj["Account"] = Account;
   ResolverObj["Mutation"] = Mutation;
+  ResolverObj["Query"] = Query;
   await app.registerPlugin({
     label: "Authentication-LoS",
     name: "authentication",

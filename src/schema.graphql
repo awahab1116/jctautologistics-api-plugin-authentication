@@ -3,9 +3,20 @@ enum loginType {
   phoneNo
 }
 
+enum userType {
+  superAdmin
+  admin
+  user
+}
+
 extend type Account {
   legacyUsername: String
   type: loginType
+  userRole: userType
+}
+
+extend type User {
+  userRole: userType
 }
 
 extend input CreateUserInput {
@@ -13,6 +24,7 @@ extend input CreateUserInput {
   legacyUsername: String
   type: loginType
   phoneVerified: Boolean = false
+  userRole: userType
 }
 
 input VerifyUserOtpInput {
@@ -66,4 +78,8 @@ extend type Mutation {
   #   serviceName: String!
   #   params: AuthenticateParamsInput!
   # ): LoginResult
+}
+
+extend type Query {
+  adminAccounts: [Account]
 }
