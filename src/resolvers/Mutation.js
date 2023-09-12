@@ -67,6 +67,14 @@ export default {
     const accountsPassword = injector.get(password_1.AccountsPassword);
     const { Accounts, users } = collections;
     let userId;
+
+    if (!user.userRole) {
+      throw new ReactionError(
+        "invalid-parameter",
+        "Please provide type of user"
+      );
+    }
+
     if (!(user?.email || user.username)) {
       throw new ReactionError(
         "invalid-parameter",
@@ -130,6 +138,7 @@ export default {
         userId: userId,
         isDeleted: false,
         type: user.type,
+        userRole: user.userRole,
       };
       const accountAdded = await Accounts.insertOne(account);
 
