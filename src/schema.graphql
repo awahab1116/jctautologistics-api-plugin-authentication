@@ -27,6 +27,11 @@ extend input CreateUserInput {
   userRole: userType
 }
 
+input CreateAdminInput {
+  email: String!
+  type: loginType!
+}
+
 input VerifyUserOtpInput {
   userId: ID!
   otp: Int!
@@ -68,6 +73,7 @@ extend type Mutation {
   # sendOTP(phone: String, email: String): Boolean
 
   createUserWithOtp(user: CreateUserInput!): newUserResult
+  addAdmin(user: CreateAdminInput!): newUserResult
   verifyOTPSignUp(user: VerifyUserOtpInput!): Boolean
   loginUser(user: LoginUserInput!): CreateUserResult
   resetPasswordOtp(user: ResetpasswordInput!): resetPasswordResult

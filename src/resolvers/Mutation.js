@@ -6,6 +6,8 @@ import password_1 from "@accounts/password";
 import server_1 from "@accounts/server";
 import ReactionError from "@reactioncommerce/reaction-error";
 import { sendEmailOTP } from "../util/otp.js";
+import { sendAdminCredentialsEmail } from "../util/sendAdminCredentialsEmail.js";
+import { randomPasswordGenerator } from "../util/randomPasswordGenerator.js";
 
 const genericOtpFunc = async (createdUser, ctx) => {
   let data;
@@ -60,8 +62,112 @@ export default {
     };
   },
 
+  addAdmin: async (_, { user }, ctx) => {
+    console.log("In create user with otp ", user);
+    const { injector, infos, collections } = ctx;
+    const accountsServer = injector.get(server_1.AccountsServer);
+    const accountsPassword = injector.get(password_1.AccountsPassword);
+    const { Accounts, users } = collections;
+    let userId;
+    const options = { new: true };
+
+    let randomPassword = await randomPasswordGenerator(10);
+    console.log("Random Password is ", randomPassword);
+
+    user.userRole = "admin";
+    user.password = randomPassword;
+    user.username = "p" + Date.now();
+    user.phoneVerified = false;
+
+    try {
+      userId = await accountsPassword.createUser(user);
+    } catch (error) {
+      // If ambiguousErrorMessages is true we obfuscate the email or username already exist error
+      // to prevent user enumeration during user creation
+      if (
+        accountsServer.options.ambiguousErrorMessages &&
+        error instanceof server_1.AccountsJsError &&
+        (error.code === password_1.CreateUserErrors.EmailAlreadyExists ||
+          error.code === password_1.CreateUserErrors.UsernameAlreadyExists)
+      ) {
+        return {};
+      }
+      throw error;
+    }
+    if (!accountsServer.options.enableAutologin) {
+      return {
+        userId: accountsServer.options.ambiguousErrorMessages ? null : userId,
+      };
+    }
+
+    const adminCount = await Accounts.findOne({
+      _id: userId,
+    });
+    console.log("adminCount", adminCount);
+    if (userId) {
+      console.log("user", user);
+      const account = {
+        _id: userId,
+        acceptsMarketing: false,
+        emails: [
+          {
+            address: user.email,
+            verified: true,
+            provides: "default",
+          },
+        ],
+        groups: [],
+        name: null,
+        profile: {
+          firstName: "here goes first name",
+          lastName: user.lastName,
+          dob: user.dob,
+          phone: user.username ? user.username : "",
+        },
+        shopId: null,
+        state: "new",
+        userId: userId,
+        isDeleted: false,
+        type: user.type,
+        userRole: user.userRole,
+      };
+      const accountAdded = await Accounts.insertOne(account);
+      let updateUser = { $set: { "emails.0.verified": true } };
+      const { result } = await users.updateOne(
+        { _id: userId },
+        updateUser,
+        options
+      );
+
+      //console.log("addedd acount is ",accountAdded);
+    }
+    // When initializing AccountsServer we check that enableAutologin and ambiguousErrorMessages options
+    // are not enabled at the same time
+    const createdUser = await accountsServer.findUserById(userId);
+    console.log("create user is ", createdUser);
+
+    let data = await sendAdminCredentialsEmail(
+      ctx,
+      createdUser.emails[0].address,
+      randomPassword,
+      "temp"
+    );
+
+    console.log("email sent to user ", data);
+    // If we are here - user must be created successfully
+    // Explicitly saying this to Typescript compiler
+    // const loginResult = await accountsServer.loginWithUser(createdUser, infos);
+    //console.log("Login Result ", loginResult);
+
+    return {
+      userId,
+      // loginResult,
+      createdUser,
+    };
+  },
+
   async createUserWithOtp(_, { user }, ctx) {
-    console.log("In create user with otp");
+    console.log("In create user with otp ", user);
     const { injector, infos, collections } = ctx;
     const accountsServer = injector.get(server_1.AccountsServer);
     const accountsPassword = injector.get(password_1.AccountsPassword);
