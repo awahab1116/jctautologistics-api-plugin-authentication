@@ -234,8 +234,8 @@ export default {
         groups: [],
         name: null,
         profile: {
-          firstName: "here goes first name",
-          lastName: user.lastName,
+          firstName: user.firstName ? user.firstName : "",
+          lastName: user.lastName ? user.lastName : "",
           dob: user.dob,
           phone: user.username ? user.username : "",
         },

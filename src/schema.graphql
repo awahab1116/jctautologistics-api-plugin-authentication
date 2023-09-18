@@ -25,6 +25,8 @@ extend input CreateUserInput {
   type: loginType
   phoneVerified: Boolean = false
   userRole: userType
+  firstName: String
+  lastName: String
 }
 
 input CreateAdminInput {
