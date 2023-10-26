@@ -174,6 +174,8 @@ export default {
     const { Accounts, users } = collections;
     let userId;
 
+    console.log("Email is lowercase ");
+
     if (!user.userRole) {
       throw new ReactionError(
         "invalid-parameter",
@@ -186,6 +188,10 @@ export default {
         "invalid-parameter",
         "Please provide either an email address or a phone number to proceed."
       );
+    }
+
+    if (user.email) {
+      user.email = user.email.toLowerCase();
     }
 
     if (user.username) {
@@ -367,6 +373,7 @@ export default {
     }
 
     if (user?.email) {
+      user.email = user.email.toLowerCase();
       userData = await users.findOne({ "emails.address": user.email });
     }
 
@@ -462,6 +469,7 @@ export default {
       userData = await users.findOne({ username: user.emailPhone });
     }
     if (user.type === "email") {
+      user.emailPhone = user.emailPhone.toLowerCase();
       userData = await users.findOne({ "emails.address": user.emailPhone });
     }
 
@@ -494,7 +502,6 @@ export default {
     const salt = bcrypt.genSaltSync();
 
     console.log("in reset password otp verify");
-
     if (!user.userId) {
       throw new ReactionError(
         "invalid-parameter",
